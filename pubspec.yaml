@@ -38,6 +38,7 @@ dependencies:
   flutter_markdown: ^0.7.7+1
   flutter_gen_ai_chat_ui: ^2.3.6
   flutter_launcher_icons: ^0.14.4
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
