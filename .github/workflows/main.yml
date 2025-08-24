@@ -40,3 +40,41 @@ jobs:
       with:
         name: release-apk
         path: build/app/outputs/flutter-apk/app-release.apk # Path to your built APKs
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.29.3' # Specify the Flutter version you want to use
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Enable Windows Desktop
+      run: flutter config --enable-windows-desktop
+
+    - name: Build Windows
+      run: flutter build windows --release
+
+    - name: Compile .ISS to .EXE Installer
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+      with:
+        path: mai.iss
+
+    - name: Upload Windows build to GitHub Actions artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: build/windows/x64/runner/Release
+
+    - name: Upload Windows build to GitHub Actions artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-installer
+        path: Output
