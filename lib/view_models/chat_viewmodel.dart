@@ -33,31 +33,80 @@ class ChatViewmodel extends ChangeNotifier {
     clearMessages();
   }
 
-  Future<void> sendMessage(String messageContent) async {
-    _messages.add(Message(role: MessageRole.user, content: messageContent));
+  DateTime getDate() {
+    return DateTime.now();
+  }
+
+  Future<void> sendMessage(Message message) async {
+    _messages.add(message);
+    _loading = true;
     notifyListeners();
 
     final stream = _appViewmodel.ollamaClient.generateChatCompletionStream(
       request: GenerateChatCompletionRequest(
         model: _appViewmodel.model!.model!,
         messages: messages,
-        think: false,
+        tools: [
+          Tool(
+            type: ToolType.function,
+            function: ToolFunction(
+              name: "get_date",
+              description: "Get the current date and time.",
+              parameters: {},
+            ),
+          ),
+        ],
+        think: true,
       ),
     );
 
     String text = "";
+    String think = "";
     int i = messages.length;
+    bool init = true;
     stream.listen(
       (response) {
-        if (text.isEmpty) {
-          _messages.add(Message(role: MessageRole.assistant, content: text));
+        if (init) {
+          _messages.add(
+            Message(
+              role: MessageRole.assistant,
+              content: text,
+              thinking: think,
+            ),
+          );
+          init = false;
           notifyListeners();
         }
-        text += response.message.content;
+        if (response.message.thinking != null) {
+          think += response.message.thinking ?? "";
+        }
+        if (response.message.content.isNotEmpty) {
+          text += response.message.content;
+        }
+        if (response.message.toolCalls != null) {
+          response.message.toolCalls!.forEach((toolCall) async {
+            switch (toolCall.function!.name) {
+              case "get_date":
+                var date = getDate();
+                await sendMessage(
+                  Message(
+                    role: MessageRole.tool,
+                    content: date.toIso8601String(),
+                  ),
+                );
+                break;
+              default:
+            }
+          });
+        }
         if (!loading) {
           _loading = true;
         }
-        _messages[i] = Message(role: MessageRole.assistant, content: text);
+        _messages[i] = Message(
+          role: MessageRole.assistant,
+          content: text,
+          thinking: think,
+        );
         notifyListeners();
       },
       onError: (e) {

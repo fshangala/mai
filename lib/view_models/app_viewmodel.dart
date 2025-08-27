@@ -27,8 +27,12 @@ class AppViewmodel extends ChangeNotifier {
   }
 
   Future<void> fetchModels() async {
-    final modelResponse = await ollamaClient.listModels();
-    _models = modelResponse.models ?? [];
-    notifyListeners();
+    try {
+      final modelResponse = await ollamaClient.listModels();
+      _models = modelResponse.models ?? [];
+      notifyListeners();
+    } catch (e) {
+      //
+    }
   }
 }

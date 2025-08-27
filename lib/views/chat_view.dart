@@ -51,6 +51,10 @@ class ChatViewState extends State<ChatView> {
                 itemCount: chatViewmodel.messages.length,
                 itemBuilder: (context, index) {
                   final message = chatViewmodel.messages[index];
+                  if (message.role == MessageRole.tool ||
+                      message.content == "") {
+                    return Text("");
+                  }
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment:
@@ -60,23 +64,50 @@ class ChatViewState extends State<ChatView> {
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (message.role == MessageRole.assistant)
                             CircleAvatar(child: Icon(Icons.computer)),
-                          Container(
-                            constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width * 0.8,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            margin: EdgeInsets.all(8.0),
-                            child: Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: MarkdownBody(data: message.content),
+                          // if (message.role == MessageRole.tool)
+                          //   CircleAvatar(child: Icon(Icons.data_object)),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 8.0,
+                            crossAxisAlignment:
+                                message.role == MessageRole.user
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                            children: [
+                              // if (message.thinking != null)
+                              //   Container(
+                              //     constraints: BoxConstraints(
+                              //       maxWidth:
+                              //           MediaQuery.of(context).size.width * 0.8,
+                              //     ),
+                              //     decoration: BoxDecoration(
+                              //       borderRadius: BorderRadius.circular(8.0),
+                              //     ),
+                              //     margin: EdgeInsets.all(8.0),
+                              //     child: MarkdownBody(data: message.thinking!),
+                              //   ),
+                              Container(
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                margin: EdgeInsets.all(8.0),
+                                child: Card(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: MarkdownBody(data: message.content),
+                                  ),
+                                ),
                               ),
-                            ),
+                              Text(DateTime.now().toIso8601String()),
+                            ],
                           ),
                           if (message.role == MessageRole.user)
                             CircleAvatar(child: Icon(Icons.person)),
@@ -125,7 +156,12 @@ class ChatViewState extends State<ChatView> {
                     : IconButton(
                       icon: Icon(Icons.send),
                       onPressed: () {
-                        chatViewmodel.sendMessage(messageController.text);
+                        chatViewmodel.sendMessage(
+                          Message(
+                            role: MessageRole.user,
+                            content: messageController.text,
+                          ),
+                        );
                         messageController.clear();
                       },
                     ),
